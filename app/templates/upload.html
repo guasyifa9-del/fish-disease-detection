@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Deteksi Penyakit — FishDetect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Header -->
+        <div class="text-center mb-4 animate-fade-in-up">
+            <div class="mb-2" style="font-size: 3rem;">🔬</div>
+            <h1 class="fw-bold" style="color: var(--green-800);">
+                Deteksi Penyakit Ikan
+            </h1>
+            <p class="text-muted">
+                Upload foto ikan air tawar Anda, AI akan menganalisis dan memberikan diagnosis.
+            </p>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="card border-0 shadow animate-fade-in-up delay-1" id="uploadCard">
+            <div class="card-body p-4 p-md-5">
+                <form id="uploadForm" action="{{ url_for('main.predict') }}" method="POST"
+                    enctype="multipart/form-data">
+
+                    <!-- ========== STATE 1: Drag & Drop Zone ========== -->
+                    <div class="upload-zone text-center p-5 mb-3" id="dropZone">
+
+                        <!-- Placeholder (sebelum pilih file) -->
+                        <div id="uploadPlaceholder">
+                            <div class="mb-3" style="font-size: 4rem; line-height: 1;">
+                                🐟
+                            </div>
+                            <h5 class="fw-bold mb-2" style="color: var(--green-700);">
+                                Seret gambar ikan ke sini
+                            </h5>
+                            <p class="text-muted mb-3">
+                                atau <span class="fw-semibold" style="color: var(--green-600); cursor: pointer;">klik
+                                    untuk pilih file</span>
+                            </p>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <span class="badge" style="background: var(--green-100); color: var(--green-700);">
+                                    <i class="bi bi-image me-1"></i> JPG / PNG
+                                </span>
+                                <span class="badge" style="background: var(--green-100); color: var(--green-700);">
+                                    <i class="bi bi-hdd me-1"></i> Maks. 5 MB
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- ========== STATE 2: Preview gambar ========== -->
+                        <div id="imagePreview" class="d-none">
+                            <img id="previewImg" src="" alt="Preview gambar ikan" class="img-fluid rounded-3 shadow-sm"
+                                style="max-height: 350px; object-fit: contain;">
+                            <div class="mt-3">
+                                <p class="mb-1 fw-semibold" style="color: var(--green-700);" id="fileName"></p>
+                                <small class="text-muted" id="fileSize"></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-green-outline mt-2" id="changeImage">
+                                <i class="bi bi-arrow-repeat me-1"></i> Ganti Gambar
+                            </button>
+                        </div>
+
+                        <!-- Hidden file input -->
+                        <input type="file" class="d-none" id="fileInput" name="file" accept=".jpg,.jpeg,.png">
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div class="alert d-none mb-3" id="errorAlert" role="alert"
+                        style="border-radius: 12px; border-left: 4px solid #ef4444; background: #fef2f2; color: #b91c1c;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill me-2 fs-5" style="color: #ef4444;"></i>
+                            <span id="errorMessage"></span>
+                        </div>
+                    </div>
+
+                    <!-- ========== Submit Button ========== -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-green btn-lg py-3" id="submitBtn" disabled
+                            style="font-size: 1.1rem; border-radius: 12px;">
+                            <i class="bi bi-search me-2"></i> Deteksi Penyakit
+                        </button>
+                    </div>
+                </form>
+
+                <!-- ========== STATE 3: Loading Overlay ========== -->
+                <div class="d-none" id="loadingOverlay">
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <div class="spinner-border text-success" role="status"
+                                style="width: 3.5rem; height: 3.5rem; border-width: 4px;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <h5 class="fw-bold mb-2" style="color: var(--green-700);">
+                            Sedang Menganalisis Gambar...
+                        </h5>
+                        <p class="text-muted mb-0">
+                            AI sedang memeriksa foto ikan Anda.<br>
+                            Mohon tunggu beberapa detik.
+                        </p>
+                        <div class="progress mt-4 mx-auto" style="max-width: 300px; height: 6px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                style="width: 100%; background: linear-gradient(90deg, var(--green-500), var(--teal-500));">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card border-0 shadow-sm mt-4 animate-fade-in-up delay-2">
+            <div class="card-body px-4 py-3">
+                <h6 class="fw-bold mb-2" style="color: var(--green-700);">
+                    <i class="bi bi-lightbulb text-warning me-2"></i>Tips untuk Hasil Terbaik:
+                </h6>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill me-2 mt-1"
+                                style="color: var(--green-500); font-size: 0.8rem;"></i>
+                            <small class="text-muted">Gunakan pencahayaan yang cukup</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill me-2 mt-1"
+                                style="color: var(--green-500); font-size: 0.8rem;"></i>
+                            <small class="text-muted">Pastikan ikan terlihat jelas</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill me-2 mt-1"
+                                style="color: var(--green-500); font-size: 0.8rem;"></i>
+                            <small class="text-muted">Foto tampak samping (lateral view)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill me-2 mt-1"
+                                style="color: var(--green-500); font-size: 0.8rem;"></i>
+                            <small class="text-muted">Hindari foto blur atau terlalu gelap</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

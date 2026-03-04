@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}404 — Halaman Tidak Ditemukan{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-emoji-frown display-1 text-warning"></i>
+        </div>
+        <h1 class="display-4 fw-bold text-dark">404</h1>
+        <h4 class="fw-semibold mb-3">Halaman Tidak Ditemukan</h4>
+        <p class="text-muted mb-4">
+            Maaf, halaman yang Anda cari tidak ditemukan.
+            Mungkin alamat URL salah atau halaman sudah dipindahkan.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                <i class="bi bi-house-door me-1"></i> Kembali ke Beranda
+            </a>
+            <a href="{{ url_for('main.upload') }}" class="btn btn-outline-primary">
+                <i class="bi bi-cloud-upload me-1"></i> Upload Gambar
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

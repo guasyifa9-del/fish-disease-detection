@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+
+{% block title %}Hasil Deteksi — FishDetect{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Severity colors */
+    .severity-danger {
+        --severity-color: #ef4444;
+        --severity-bg: #fef2f2;
+        --severity-border: #fca5a5;
+    }
+
+    .severity-warning {
+        --severity-color: #f59e0b;
+        --severity-bg: #fffbeb;
+        --severity-border: #fcd34d;
+    }
+
+    .severity-success {
+        --severity-color: var(--green-600);
+        --severity-bg: var(--green-50);
+        --severity-border: var(--green-300);
+    }
+
+    .diagnosis-badge {
+        background: var(--severity-bg);
+        border: 2px solid var(--severity-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .diagnosis-badge .diagnosis-icon {
+        font-size: 2.5rem;
+        color: var(--severity-color);
+    }
+
+    .diagnosis-badge .diagnosis-title {
+        color: var(--severity-color);
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Prob bars */
+    .prob-bar-container {
+        margin-bottom: 0.5rem;
+    }
+
+    .prob-bar-label {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--text-body);
+    }
+
+    .prob-bar-value {
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .prob-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e5e7eb;
+        overflow: hidden;
+    }
+
+    .prob-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+    }
+
+    .prob-bar-fill.top {
+        background: linear-gradient(90deg, var(--green-500), var(--teal-500));
+    }
+
+    .prob-bar-fill.other {
+        background: #d1d5db;
+    }
+
+    /* Info cards */
+    .info-section {
+        border-left: 4px solid var(--green-400);
+        padding-left: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .info-section.treatment-highlight {
+        border-left-color: var(--green-600);
+        background: var(--green-50);
+        padding: 1rem 1rem 1rem 1.25rem;
+        border-radius: 0 12px 12px 0;
+    }
+
+    .info-section h6 {
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+
+    .info-section p {
+        font-size: 0.92rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+        line-height: 1.6;
+    }
+
+    /* Print button */
+    @media print {
+
+        .navbar-fish,
+        footer,
+        .no-print {
+            display: none !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #e5e7eb !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- Breadcrumb + Header -->
+        <div class="mb-4 animate-fade-in-up">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Beranda</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.upload') }}">Deteksi</a></li>
+                    <li class="breadcrumb-item active">Hasil</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h1 class="fw-bold mb-0" style="color: var(--green-800);">
+                    <i class="bi bi-clipboard2-pulse me-2" style="color: var(--green-600);"></i>Hasil Deteksi
+                </h1>
+                <small class="text-muted">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ prediction.detection_date.strftime('%d %B %Y, %H:%M WIB') }}
+                </small>
+            </div>
+        </div>
+
+        <!-- ===== Panel Utama: Gambar + Diagnosis ===== -->
+        <div class="row g-4 mb-4">
+
+            <!-- KIRI: Gambar Ikan -->
+            <div class="col-md-5 animate-fade-in-up delay-1">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body p-3 text-center">
+                        <img src="{{ url_for('static', filename='uploads/' + prediction.image_filename) }}"
+                            alt="Gambar ikan yang dianalisis" class="img-fluid rounded-3 shadow-sm"
+                            style="max-height: 380px; object-fit: contain; width: 100%;">
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="bi bi-file-image me-1"></i>{{ prediction.image_filename }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KANAN: Hasil Prediksi -->
+            <div class="col-md-7 animate-fade-in-up delay-2">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body p-4">
+
+                        <!-- Diagnosis Badge -->
+                        {% set is_healthy = 'Ikan Sehat' in prediction.predicted_class or 'healthy' in
+                        prediction.predicted_class.lower() or 'Healthy' in prediction.predicted_class %}
+                        {% set is_parasitic = 'Parasit' in prediction.predicted_class or 'Parasitic' in
+                        prediction.predicted_class %}
+
+                        <div class="diagnosis-badge text-center mb-4
+                            {% if is_healthy %}severity-success
+                            {% elif is_parasitic %}severity-warning
+                            {% else %}severity-danger{% endif %}">
+
+                            <div class="diagnosis-icon">
+                                {% if is_healthy %}
+                                <i class="bi bi-check-circle-fill"></i>
+                                {% elif is_parasitic %}
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                {% else %}
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                {% endif %}
+                            </div>
+                            <h4 class="diagnosis-title mt-2">{{ prediction.predicted_class }}</h4>
+                            <p class="text-muted small mb-0">
+                                {% if is_healthy %}
+                                Ikan Anda dalam kondisi sehat! 🎉
+                                {% elif is_parasitic %}
+                                Perlu perhatian — segera lakukan penanganan
+                                {% else %}
+                                Penyakit terdeteksi — segera lakukan penanganan!
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Confidence Score -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold" style="font-size: 0.95rem;">
+                                    <i class="bi bi-speedometer2 me-1"></i> Tingkat Keyakinan AI
+                                </span>
+                                <span class="fw-bold fs-5"
+                                    style="color: {% if prediction.confidence_score >= 0.8 %}var(--green-600){% elif prediction.confidence_score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                    {{ (prediction.confidence_score * 100)|round(1) }}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar" role="progressbar"
+                                    style="width: {{ (prediction.confidence_score * 100)|round(1) }}%;">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                {% if prediction.confidence_score >= 0.9 %}
+                                Sangat yakin — hasil dapat diandalkan
+                                {% elif prediction.confidence_score >= 0.7 %}
+                                Cukup yakin — disarankan konfirmasi ke ahli
+                                {% else %}
+                                Kurang yakin — sebaiknya konsultasi ke ahli perikanan
+                                {% endif %}
+                            </small>
+                        </div>
+
+                        <!-- Probabilitas Semua Kelas -->
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-3" style="font-size: 0.95rem;">
+                                <i class="bi bi-bar-chart me-1"></i> Probabilitas Semua Kelas
+                            </h6>
+                            {% if probabilities %}
+                            {% for class_name, prob in probabilities %}
+                            <div class="prob-bar-container">
+                                <div class="d-flex justify-content-between">
+                                    <span class="prob-bar-label">{{ class_name }}</span>
+                                    <span class="prob-bar-value"
+                                        style="color: {% if loop.first %}var(--green-600){% else %}#9ca3af{% endif %};">
+                                        {{ prob }}%
+                                    </span>
+                                </div>
+                                <div class="prob-bar">
+                                    <div class="prob-bar-fill {% if loop.first %}top{% else %}other{% endif %}"
+                                        style="width: {{ prob }}%;"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Informasi Penyakit ===== -->
+        {% if disease_info and not is_healthy %}
+        <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4" style="color: var(--green-800);">
+                    <i class="bi bi-journal-medical me-2" style="color: var(--green-600);"></i>
+                    Informasi Penyakit
+                </h5>
+
+                {% if disease_info.cause %}
+                <div class="info-section">
+                    <h6><i class="bi bi-virus me-1 text-danger"></i> Penyebab</h6>
+                    <p>{{ disease_info.cause }}</p>
+                </div>
+                {% endif %}
+
+                {% if disease_info.symptoms %}
+                <div class="info-section">
+                    <h6><i class="bi bi-thermometer-half me-1" style="color: #f59e0b;"></i> Gejala yang Terlihat</h6>
+                    <p>{{ disease_info.symptoms }}</p>
+                </div>
+                {% endif %}
+
+                {% if disease_info.treatment %}
+                <div class="info-section treatment-highlight">
+                    <h6 style="color: var(--green-700);">
+                        <i class="bi bi-capsule me-1"></i> ⭐ Cara Penanganan (PENTING)
+                    </h6>
+                    <p style="color: var(--text-dark);">{{ disease_info.treatment }}</p>
+                </div>
+                {% endif %}
+
+                {% if disease_info.prevention %}
+                <div class="info-section">
+                    <h6><i class="bi bi-shield-check me-1" style="color: var(--teal-500);"></i> Cara Pencegahan</h6>
+                    <p>{{ disease_info.prevention }}</p>
+                </div>
+                {% endif %}
+
+                <a href="{{ url_for('main.disease_info', disease_name=disease_info.disease_name) }}"
+                    class="btn btn-sm btn-green-outline mt-2">
+                    <i class="bi bi-book me-1"></i> Baca Info Lengkap
+                </a>
+            </div>
+        </div>
+        {% elif is_healthy %}
+        <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3"
+            style="border-left: 4px solid var(--green-500) !important;">
+            <div class="card-body p-4 text-center">
+                <div style="font-size: 3rem;">🎉</div>
+                <h5 class="fw-bold mt-2" style="color: var(--green-700);">Ikan Anda Sehat!</h5>
+                <p class="text-muted mb-0">
+                    Tidak ditemukan tanda-tanda penyakit pada ikan.
+                    Tetap jaga kualitas air dan pakan untuk menjaga kesehatan ikan Anda.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ===== Tombol Aksi ===== -->
+        <div class="row g-3 mb-4 no-print animate-fade-in-up delay-4">
+            <div class="col-md-4">
+                <a href="{{ url_for('main.upload') }}" class="btn btn-green btn-lg w-100 py-3">
+                    <i class="bi bi-camera me-2"></i> Deteksi Gambar Lain
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('main.history') }}" class="btn btn-green-outline btn-lg w-100 py-3">
+                    <i class="bi bi-clock-history me-2"></i> Lihat Riwayat
+                </a>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-lg w-100 py-3" id="printBtn"
+                    style="background: var(--green-100); color: var(--green-700); border: 2px solid var(--green-200); font-weight: 600; border-radius: 10px;">
+                    <i class="bi bi-printer me-2"></i> Cetak Hasil
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Print/download functionality
+    document.getElementById('printBtn').addEventListener('click', function () {
+        window.print();
+    });
+
+    // Animate probability bars on load
+    document.addEventListener('DOMContentLoaded', function () {
+        const bars = document.querySelectorAll('.prob-bar-fill');
+        bars.forEach(function (bar) {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(function () {
+                bar.style.width = width;
+            }, 300);
+        });
+    });
+</script>
+{% endblock %}

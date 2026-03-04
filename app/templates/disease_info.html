@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ disease.display_name }} — FishDetect{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Sidebar nav */
+    .disease-nav .nav-link {
+        color: var(--text-body);
+        font-weight: 500;
+        font-size: 0.92rem;
+        padding: 0.65rem 1rem;
+        border-radius: 10px;
+        transition: var(--transition);
+        border-left: 3px solid transparent;
+    }
+
+    .disease-nav .nav-link:hover {
+        background: var(--green-50);
+        color: var(--green-700);
+        border-left-color: var(--green-300);
+    }
+
+    .disease-nav .nav-link.active {
+        background: var(--green-100);
+        color: var(--green-700);
+        font-weight: 600;
+        border-left-color: var(--green-600);
+    }
+
+    .disease-nav .nav-link i {
+        width: 24px;
+        text-align: center;
+    }
+
+    .info-block {
+        border-left: 4px solid var(--green-300);
+        padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+        border-radius: 0 12px 12px 0;
+        background: #fff;
+    }
+
+    .info-block.highlight {
+        border-left-color: var(--green-600);
+        background: var(--green-50);
+    }
+
+    .info-block h5 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-block p {
+        font-size: 0.93rem;
+        color: var(--text-muted);
+        line-height: 1.7;
+        margin-bottom: 0;
+        white-space: pre-line;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-11">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-3 animate-fade-in-up">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Beranda</a></li>
+                <li class="breadcrumb-item">Info Penyakit</li>
+                <li class="breadcrumb-item active">{{ disease.display_name }}</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+
+            <!-- ===== SIDEBAR KIRI: Daftar Penyakit ===== -->
+            <div class="col-lg-3 animate-fade-in-up delay-1">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-3 px-2" style="color: var(--green-700);">
+                            <i class="bi bi-list-ul me-1"></i> Daftar Penyakit
+                        </h6>
+                        <nav class="disease-nav">
+                            <ul class="nav flex-column gap-1">
+                                {% if all_diseases %}
+                                {% for d in all_diseases %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if d.disease_name == disease.disease_name %}active{% endif %}"
+                                        href="{{ url_for('main.disease_info', disease_name=d.disease_name) }}">
+                                        {% if d.disease_name == 'healthy' or 'Sehat' in d.display_name %}
+                                        <i class="bi bi-heart-pulse text-success me-2"></i>
+                                        {% else %}
+                                        <i class="bi bi-bug text-danger me-2"></i>
+                                        {% endif %}
+                                        {{ d.display_name }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Mobile: Accordion Toggle -->
+                <div class="d-lg-none mb-3">
+                    <button class="btn btn-green-outline w-100" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mobileDiseaseList">
+                        <i class="bi bi-list me-1"></i> Lihat Daftar Penyakit Lain
+                    </button>
+                    <div class="collapse mt-2" id="mobileDiseaseList">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-2">
+                                {% if all_diseases %}
+                                {% for d in all_diseases %}
+                                {% if d.disease_name != disease.disease_name %}
+                                <a href="{{ url_for('main.disease_info', disease_name=d.disease_name) }}"
+                                    class="d-block p-2 text-decoration-none text-dark rounded"
+                                    style="font-size: 0.9rem;">
+                                    {% if d.disease_name == 'healthy' %}🟢{% else %}🔴{% endif %}
+                                    {{ d.display_name }}
+                                </a>
+                                {% endif %}
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== AREA KANAN: Detail Penyakit ===== -->
+            <div class="col-lg-9 animate-fade-in-up delay-2">
+
+                <!-- Header Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center">
+                            {% if disease.disease_name == 'healthy' or 'Sehat' in disease.display_name %}
+                            <div class="rounded-circle p-3 me-3" style="background: var(--green-100);">
+                                <i class="bi bi-heart-pulse display-6" style="color: var(--green-600);"></i>
+                            </div>
+                            {% else %}
+                            <div class="rounded-circle p-3 me-3" style="background: #fef2f2;">
+                                <i class="bi bi-bug display-6" style="color: #ef4444;"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h2 class="fw-bold mb-1" style="color: var(--green-800);">
+                                    {{ disease.display_name }}
+                                </h2>
+                                <span class="badge"
+                                    style="background: var(--green-100); color: var(--green-700); font-size: 0.8rem;">
+                                    {{ disease.disease_name }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Penyebab -->
+                {% if disease.cause %}
+                <div class="info-block animate-fade-in-up delay-3">
+                    <h5>
+                        <i class="bi bi-virus text-danger me-2"></i>
+                        Penyebab
+                    </h5>
+                    <p>{{ disease.cause }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Gejala -->
+                {% if disease.symptoms %}
+                <div class="info-block animate-fade-in-up delay-4">
+                    <h5>
+                        <i class="bi bi-thermometer-half me-2" style="color: #f59e0b;"></i>
+                        Gejala yang Terlihat
+                    </h5>
+                    <p>{{ disease.symptoms }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Penanganan (HIGHLIGHT) -->
+                {% if disease.treatment %}
+                <div class="info-block highlight animate-fade-in-up delay-5">
+                    <h5 style="color: var(--green-700);">
+                        <i class="bi bi-capsule me-2"></i>
+                        ⭐ Cara Penanganan
+                    </h5>
+                    <p style="color: var(--text-dark);">{{ disease.treatment }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Pencegahan -->
+                {% if disease.prevention %}
+                <div class="info-block animate-fade-in-up delay-6">
+                    <h5>
+                        <i class="bi bi-shield-check me-2" style="color: var(--teal-500);"></i>
+                        Cara Pencegahan
+                    </h5>
+                    <p>{{ disease.prevention }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Deteksi Terkait -->
+                {% if related_predictions %}
+                <div class="card border-0 shadow-sm mt-4 animate-fade-in-up delay-7">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3" style="color: var(--green-700);">
+                            <i class="bi bi-clock-history me-2"></i> Deteksi Terkait
+                        </h5>
+                        <div class="row g-2">
+                            {% for pred in related_predictions %}
+                            <div class="col-sm-6 col-md-4">
+                                <a href="{{ url_for('main.result', detection_id=pred.detection_id) }}"
+                                    class="card card-hover border-0 text-decoration-none h-100"
+                                    style="background: var(--green-50);">
+                                    <div class="card-body p-3 d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='uploads/' + pred.image_filename) }}"
+                                            alt="Thumbnail" class="rounded-2 me-2"
+                                            style="width: 45px; height: 45px; object-fit: cover;">
+                                        <div>
+                                            <div class="fw-bold small" style="color: var(--green-700);">
+                                                {{ (pred.confidence_score * 100)|round(1) }}%
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ pred.detection_date.strftime('%d/%m/%Y') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quick Action -->
+                <div class="text-center mt-4 animate-fade-in-up delay-7">
+                    <a href="{{ url_for('main.upload') }}" class="btn btn-green btn-lg px-4">
+                        <i class="bi bi-camera me-2"></i> Deteksi Ikan Anda Sekarang
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

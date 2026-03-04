@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Riwayat Deteksi — FishDetect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 animate-fade-in-up">
+            <div>
+                <h1 class="fw-bold mb-1" style="color: var(--green-800);">
+                    <i class="bi bi-clock-history me-2" style="color: var(--green-600);"></i>Riwayat Deteksi
+                </h1>
+                <p class="text-muted mb-0">Daftar semua hasil deteksi penyakit ikan yang pernah dilakukan.</p>
+            </div>
+            <a href="{{ url_for('main.upload') }}" class="btn btn-green">
+                <i class="bi bi-plus-lg me-1"></i> Deteksi Baru
+            </a>
+        </div>
+
+        {% if predictions.items %}
+
+        <!-- Filter Tabs -->
+        <div class="mb-3 animate-fade-in-up delay-1">
+            <div class="btn-group" role="group" id="filterGroup">
+                <button type="button" class="btn btn-sm btn-green active" data-filter="all">
+                    <i class="bi bi-grid me-1"></i> Semua
+                </button>
+                <button type="button" class="btn btn-sm btn-green-outline" data-filter="sick">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Sakit
+                </button>
+                <button type="button" class="btn btn-sm btn-green-outline" data-filter="healthy">
+                    <i class="bi bi-check-circle me-1"></i> Sehat
+                </button>
+            </div>
+            <span class="text-muted small ms-3">
+                {{ predictions.total }} deteksi ditemukan
+            </span>
+        </div>
+
+        <!-- History Cards (mobile-friendly) -->
+        <div class="row g-3 animate-fade-in-up delay-2" id="historyList">
+            {% for prediction in predictions.items %}
+            {% set is_healthy = 'Sehat' in prediction.predicted_class or 'healthy' in prediction.predicted_class.lower()
+            or 'Healthy' in prediction.predicted_class %}
+            {% set is_parasitic = 'Parasit' in prediction.predicted_class or 'Parasitic' in prediction.predicted_class
+            %}
+
+            <div class="col-12 history-item" data-status="{% if is_healthy %}healthy{% else %}sick{% endif %}">
+                <a href="{{ url_for('main.result', detection_id=prediction.detection_id) }}"
+                    class="card card-hover border-0 shadow-sm text-decoration-none"
+                    style="border-left: 4px solid {% if is_healthy %}var(--green-500){% elif is_parasitic %}#f59e0b{% else %}#ef4444{% endif %} !important;">
+                    <div class="card-body py-3 px-4">
+                        <div class="row align-items-center">
+                            <!-- Thumbnail -->
+                            <div class="col-auto">
+                                <img src="{{ url_for('static', filename='uploads/' + prediction.image_filename) }}"
+                                    alt="Ikan" class="rounded-3" style="width: 60px; height: 60px; object-fit: cover;">
+                            </div>
+                            <!-- Info -->
+                            <div class="col">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <!-- Badge -->
+                                    {% if is_healthy %}
+                                    <span class="badge" style="background: var(--green-100); color: var(--green-700);">
+                                        <i class="bi bi-check-circle me-1"></i>Sehat
+                                    </span>
+                                    {% elif is_parasitic %}
+                                    <span class="badge" style="background: #fef3c7; color: #92400e;">
+                                        <i class="bi bi-exclamation-circle me-1"></i>Perhatian
+                                    </span>
+                                    {% else %}
+                                    <span class="badge" style="background: #fef2f2; color: #b91c1c;">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Sakit
+                                    </span>
+                                    {% endif %}
+                                    <span class="text-dark fw-semibold small">{{ prediction.predicted_class }}</span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    {{ prediction.detection_date.strftime('%d %b %Y, %H:%M') }}
+                                </small>
+                            </div>
+                            <!-- Confidence -->
+                            <div class="col-auto text-end">
+                                <div class="fw-bold"
+                                    style="color: {% if prediction.confidence_score >= 0.8 %}var(--green-600){% elif prediction.confidence_score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                    {{ (prediction.confidence_score * 100)|round(1) }}%
+                                </div>
+                                <div class="progress mt-1" style="width: 80px; height: 5px;">
+                                    <div class="progress-bar"
+                                        style="width: {{ (prediction.confidence_score * 100)|round(1) }}%;"></div>
+                                </div>
+                            </div>
+                            <!-- Arrow -->
+                            <div class="col-auto d-none d-md-block">
+                                <i class="bi bi-chevron-right text-muted"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if predictions.pages > 1 %}
+        <nav class="mt-4 d-flex justify-content-center animate-fade-in-up delay-3">
+            <ul class="pagination">
+                {% if predictions.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.history', page=predictions.prev_num) }}"
+                        style="color: var(--green-700); border-color: var(--green-200);">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in predictions.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == predictions.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.history', page=page_num) }}" {% if
+                        page_num==predictions.page %}
+                        style="background: var(--green-600); border-color: var(--green-600);" {% else %}
+                        style="color: var(--green-700); border-color: var(--green-200);" {% endif %}>
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" style="border-color: var(--green-200);">…</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if predictions.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.history', page=predictions.next_num) }}"
+                        style="color: var(--green-700); border-color: var(--green-200);">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <!-- ===== Empty State ===== -->
+        <div class="card border-0 shadow animate-fade-in-up delay-1">
+            <div class="card-body text-center py-5">
+                <div style="font-size: 4rem;" class="mb-3">🐟</div>
+                <h4 class="fw-bold mb-2" style="color: var(--green-700);">Belum Ada Riwayat Deteksi</h4>
+                <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">
+                    Anda belum pernah melakukan deteksi penyakit ikan.
+                    Upload foto ikan Anda sekarang untuk memulai!
+                </p>
+                <a href="{{ url_for('main.upload') }}" class="btn btn-green btn-lg px-4">
+                    <i class="bi bi-camera me-2"></i> Mulai Deteksi Sekarang
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterBtns = document.querySelectorAll('#filterGroup button');
+        const items = document.querySelectorAll('.history-item');
+
+        filterBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                // Update active state
+                filterBtns.forEach(function (b) {
+                    b.classList.remove('active', 'btn-green');
+                    b.classList.add('btn-green-outline');
+                });
+                this.classList.remove('btn-green-outline');
+                this.classList.add('active', 'btn-green');
+
+                const filter = this.getAttribute('data-filter');
+
+                // Filter items
+                items.forEach(function (item) {
+                    if (filter === 'all') {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = item.getAttribute('data-status') === filter ? '' : 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
