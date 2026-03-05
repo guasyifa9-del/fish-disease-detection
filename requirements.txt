@@ -17,7 +17,7 @@ Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.23
 
 # --- Deep Learning (CPU only, hemat RAM untuk cloud) ---
-tensorflow-cpu==2.13.1
+tensorflow-cpu==2.18.0
 
 # --- Image Processing ---
 Pillow==10.1.0
