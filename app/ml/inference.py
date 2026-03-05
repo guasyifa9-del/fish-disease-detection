@@ -32,36 +32,43 @@ logger = logging.getLogger(__name__)
 CLASS_NAMES = {
     0: {
         'folder': 'bacterial_Aeromoniasis',
+        'db_key': 'aeromonas',
         'name': 'Aeromonas (Aeromoniasis)',
         'name_en': 'Aeromonas'
     },
     1: {
         'folder': 'bacterial_gill_disease',
+        'db_key': 'bacterial_gill_disease',
         'name': 'Bacterial Gill Disease (Penyakit Insang)',
         'name_en': 'Bacterial Gill Disease'
     },
     2: {
         'folder': 'bacterial_red_disease',
+        'db_key': 'bacterial_red_disease',
         'name': 'Bacterial Red Disease (Bercak Merah)',
         'name_en': 'Bacterial Red Disease'
     },
     3: {
         'folder': 'fungal_disease',
+        'db_key': 'fungal_saprolegniasis',
         'name': 'Fungal Saprolegniasis (Penyakit Jamur)',
         'name_en': 'Fungal Saprolegniasis'
     },
     4: {
         'folder': 'healthy',
+        'db_key': 'healthy',
         'name': 'Ikan Sehat',
         'name_en': 'Healthy'
     },
     5: {
         'folder': 'parasitic_disease',
+        'db_key': 'parasitic_disease',
         'name': 'Parasitic Disease (Penyakit Parasit)',
         'name_en': 'Parasitic Disease'
     },
     6: {
         'folder': 'white_tail_disease',
+        'db_key': 'white_tail_disease',
         'name': 'White Tail Disease (Ekor Putih)',
         'name_en': 'White Tail Disease'
     }
@@ -144,7 +151,7 @@ def predict_disease(image_path, model=None):
         'class_id': class_id,
         'class_name': class_info['name'],
         'class_name_en': class_info['name_en'],
-        'disease_key': class_info['folder'],
+        'disease_key': class_info.get('db_key', class_info['folder']),
         'confidence': round(confidence, 2),
         'all_probabilities': all_probabilities
     }

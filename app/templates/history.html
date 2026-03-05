@@ -42,10 +42,19 @@
         <!-- History Cards (mobile-friendly) -->
         <div class="row g-3 animate-fade-in-up delay-2" id="historyList">
             {% for prediction in predictions.items %}
-            {% set is_healthy = 'Sehat' in prediction.predicted_class or 'healthy' in prediction.predicted_class.lower()
-            or 'Healthy' in prediction.predicted_class %}
-            {% set is_parasitic = 'Parasit' in prediction.predicted_class or 'Parasitic' in prediction.predicted_class
-            %}
+            {% set is_healthy = prediction.predicted_class == 'healthy' or 'Sehat' in prediction.predicted_class or
+            'Healthy' in prediction.predicted_class %}
+            {% set is_parasitic = prediction.predicted_class == 'parasitic_disease' or 'Parasit' in
+            prediction.predicted_class or 'Parasitic' in prediction.predicted_class %}
+            {% set display_names = {
+            'bacterial_red_disease': 'Penyakit Merah (Bacterial Red Disease)',
+            'aeromonas': 'Aeromonas (Aeromoniasis)',
+            'bacterial_gill_disease': 'Penyakit Insang (Bacterial Gill Disease)',
+            'fungal_saprolegniasis': 'Saprolegniasis (Infeksi Jamur)',
+            'parasitic_disease': 'Penyakit Parasit',
+            'white_tail_disease': 'Penyakit Ekor Putih (White Tail Disease)',
+            'healthy': 'Ikan Sehat'
+            } %}
 
             <div class="col-12 history-item" data-status="{% if is_healthy %}healthy{% else %}sick{% endif %}">
                 <a href="{{ url_for('main.result', detection_id=prediction.detection_id) }}"
@@ -75,7 +84,9 @@
                                         <i class="bi bi-exclamation-triangle me-1"></i>Sakit
                                     </span>
                                     {% endif %}
-                                    <span class="text-dark fw-semibold small">{{ prediction.predicted_class }}</span>
+                                    <span class="text-dark fw-semibold small">{{
+                                        display_names.get(prediction.predicted_class, prediction.predicted_class)
+                                        }}</span>
                                 </div>
                                 <small class="text-muted">
                                     <i class="bi bi-calendar3 me-1"></i>

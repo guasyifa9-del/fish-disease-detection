@@ -325,10 +325,11 @@ def result(detection_id):
         disease_name=detection.predicted_class
     ).first()
 
-    # Fallback: coba cari berdasarkan nama display jika tidak ketemu
+    # Fallback: coba cari berdasarkan nama display atau folder name
     if not disease_info:
-        # Mapping display name ke disease_key
+        # Mapping semua kemungkinan nama ke database key
         name_to_key = {
+            # Display names (Bahasa Indonesia)
             'Aeromonas (Aeromoniasis)': 'aeromonas',
             'Bacterial Gill Disease (Penyakit Insang)': 'bacterial_gill_disease',
             'Bacterial Red Disease (Bercak Merah)': 'bacterial_red_disease',
@@ -336,6 +337,9 @@ def result(detection_id):
             'Parasitic Disease (Penyakit Parasit)': 'parasitic_disease',
             'White Tail Disease (Ekor Putih)': 'white_tail_disease',
             'Ikan Sehat': 'healthy',
+            # Folder names dari training data
+            'bacterial_Aeromoniasis': 'aeromonas',
+            'fungal_disease': 'fungal_saprolegniasis',
         }
         key = name_to_key.get(detection.predicted_class, '')
         if key:
