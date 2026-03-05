@@ -12,7 +12,7 @@ Module ini menangani seluruh pipeline preprocessing gambar:
 import os
 import logging
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 
 logger = logging.getLogger(__name__)
 
@@ -119,3 +119,75 @@ def validate_image(image_path):
 
     except (IOError, SyntaxError) as e:
         return False, f'File gambar tidak valid: {str(e)}'
+
+
+def preprocess_image_tta(image_path):
+    """
+    Test-Time Augmentation (TTA): membuat beberapa versi augmented
+    dari gambar input untuk meningkatkan akurasi prediksi.
+
+    Augmentasi yang digunakan:
+        1. Original
+        2. Horizontal flip
+        3. Center crop 90%
+        4. Brightness +10%
+        5. Brightness -10%
+        6. Slight rotation (5 derajat)
+
+    Args:
+        image_path (str): Path ke file gambar
+
+    Returns:
+        numpy.ndarray: Array shape (6, 224, 224, 3), range [0, 1]
+    """
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"File gambar tidak ditemukan: {image_path}")
+
+    try:
+        img = Image.open(image_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        target_size = (224, 224)
+        augmented = []
+
+        # 1. Original
+        img_resized = img.resize(target_size, Image.LANCZOS)
+        augmented.append(np.array(img_resized, dtype=np.float32) / 255.0)
+
+        # 2. Horizontal flip
+        img_flip = img_resized.transpose(Image.FLIP_LEFT_RIGHT)
+        augmented.append(np.array(img_flip, dtype=np.float32) / 255.0)
+
+        # 3. Center crop 90%
+        w, h = img.size
+        crop_ratio = 0.9
+        left = int(w * (1 - crop_ratio) / 2)
+        top = int(h * (1 - crop_ratio) / 2)
+        right = w - left
+        bottom = h - top
+        img_crop = img.crop((left, top, right, bottom)).resize(target_size, Image.LANCZOS)
+        augmented.append(np.array(img_crop, dtype=np.float32) / 255.0)
+
+        # 4. Brightness +10%
+        enhancer = ImageEnhance.Brightness(img_resized)
+        img_bright = enhancer.enhance(1.1)
+        augmented.append(np.array(img_bright, dtype=np.float32) / 255.0)
+
+        # 5. Brightness -10%
+        img_dark = enhancer.enhance(0.9)
+        augmented.append(np.array(img_dark, dtype=np.float32) / 255.0)
+
+        # 6. Slight rotation
+        img_rot = img.rotate(5, resample=Image.BICUBIC, expand=False, fillcolor=(128, 128, 128))
+        img_rot = img_rot.resize(target_size, Image.LANCZOS)
+        augmented.append(np.array(img_rot, dtype=np.float32) / 255.0)
+
+        batch = np.array(augmented)
+        logger.info(f"TTA: {len(augmented)} augmented images, shape: {batch.shape}")
+
+        return batch
+
+    except Exception as e:
+        logger.error(f"Error saat TTA preprocessing: {e}")
+        raise

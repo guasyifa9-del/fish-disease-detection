@@ -136,6 +136,7 @@ NUM_CLASSES = len(CLASS_NAMES)
 def predict_disease(image_path, model=None):
     """
     Pipeline lengkap untuk memprediksi penyakit ikan dari gambar.
+    Menggunakan Test-Time Augmentation (TTA) untuk akurasi lebih baik.
 
     Args:
         image_path (str): Path absolut ke file gambar ikan.
@@ -150,24 +151,37 @@ def predict_disease(image_path, model=None):
             - 'confidence' (float): Tingkat keyakinan (0-100%)
             - 'all_probabilities' (dict): Probabilitas semua 7 kelas
     """
-    # 1. Preprocessing gambar
-    from app.ml.preprocessing import preprocess_image
-    logger.info(f"Memulai prediksi untuk: {image_path}")
-    processed_image = preprocess_image(image_path)
+    from app.ml.preprocessing import preprocess_image, preprocess_image_tta
+    logger.info(f"Memulai prediksi (TTA) untuk: {image_path}")
 
-    # 2. Load model (singleton)
+    # Load model (singleton)
     if model is None:
         from app.ml.model_loader import get_model
         model = get_model()
 
-    # 3. Prediksi
-    logger.info("Menjalankan inferensi CNN...")
-    predictions = model.predict(processed_image, verbose=0)
-    prediction_array = predictions[0]  # Ambil batch pertama
+    # ===== Test-Time Augmentation =====
+    try:
+        # Buat batch augmented images
+        tta_batch = preprocess_image_tta(image_path)
 
-    # 4. Decode hasil
+        # Prediksi semua augmented images sekaligus
+        logger.info(f"Menjalankan TTA inferensi ({tta_batch.shape[0]} gambar)...")
+        all_predictions = model.predict(tta_batch, verbose=0)
+
+        # Rata-ratakan probabilitas dari semua augmented images
+        prediction_array = np.mean(all_predictions, axis=0)
+        logger.info(f"TTA rata-rata: {[f'{p:.4f}' for p in prediction_array]}")
+
+    except Exception as e:
+        # Fallback ke single prediction jika TTA gagal
+        logger.warning(f"TTA gagal, fallback ke single prediction: {e}")
+        processed_image = preprocess_image(image_path)
+        predictions = model.predict(processed_image, verbose=0)
+        prediction_array = predictions[0]
+
+    # Decode hasil
     class_id = int(np.argmax(prediction_array))
-    confidence = float(prediction_array[class_id]) * 100  # Konversi ke persen
+    confidence = float(prediction_array[class_id]) * 100
 
     # Ambil info kelas
     class_info = CLASS_NAMES.get(class_id, {
@@ -178,7 +192,6 @@ def predict_disease(image_path, model=None):
     })
 
     # Log raw predictions untuk debugging
-    logger.info(f"Raw predictions: {[f'{p:.4f}' for p in prediction_array]}")
     logger.info(f"Predicted class_id: {class_id} → {class_info['folder']} ({class_info['db_key']})")
 
     # Buat dictionary probabilitas semua kelas
