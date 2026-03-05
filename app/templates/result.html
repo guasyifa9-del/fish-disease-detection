@@ -168,10 +168,10 @@
                     <div class="card-body p-4">
 
                         <!-- Diagnosis Badge -->
-                        {% set is_healthy = 'Ikan Sehat' in prediction.predicted_class or 'healthy' in
-                        prediction.predicted_class.lower() or 'Healthy' in prediction.predicted_class %}
-                        {% set is_parasitic = 'Parasit' in prediction.predicted_class or 'Parasitic' in
-                        prediction.predicted_class %}
+                        {% set is_healthy = prediction.predicted_class == 'healthy' or 'Ikan Sehat' in
+                        prediction.predicted_class or 'Healthy' in prediction.predicted_class %}
+                        {% set is_parasitic = prediction.predicted_class == 'parasitic_disease' or 'Parasit' in
+                        prediction.predicted_class or 'Parasitic' in prediction.predicted_class %}
 
                         <div class="diagnosis-badge text-center mb-4
                             {% if is_healthy %}severity-success
@@ -187,7 +187,8 @@
                                 <i class="bi bi-exclamation-triangle-fill"></i>
                                 {% endif %}
                             </div>
-                            <h4 class="diagnosis-title mt-2">{{ prediction.predicted_class }}</h4>
+                            <h4 class="diagnosis-title mt-2">{{ disease_info.display_name if disease_info else
+                                prediction.predicted_class }}</h4>
                             <p class="text-muted small mb-0">
                                 {% if is_healthy %}
                                 Ikan Anda dalam kondisi sehat! 🎉

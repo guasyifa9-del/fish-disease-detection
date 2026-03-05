@@ -144,6 +144,7 @@ def predict_disease(image_path, model=None):
         'class_id': class_id,
         'class_name': class_info['name'],
         'class_name_en': class_info['name_en'],
+        'disease_key': class_info['folder'],
         'confidence': round(confidence, 2),
         'all_probabilities': all_probabilities
     }

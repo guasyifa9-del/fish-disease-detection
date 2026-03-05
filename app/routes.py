@@ -266,7 +266,7 @@ def predict():
         # --- 8. Simpan hasil ke database ---
         detection = save_detection(
             image_path=filename,
-            predicted_class=result['class_name'],
+            predicted_class=result.get('disease_key', result['class_name']),
             confidence=result['confidence'] / 100.0  # Konversi % ke 0-1
         )
 
@@ -324,6 +324,22 @@ def result(detection_id):
     disease_info = Disease.query.filter_by(
         disease_name=detection.predicted_class
     ).first()
+
+    # Fallback: coba cari berdasarkan nama display jika tidak ketemu
+    if not disease_info:
+        # Mapping display name ke disease_key
+        name_to_key = {
+            'Aeromonas (Aeromoniasis)': 'aeromonas',
+            'Bacterial Gill Disease (Penyakit Insang)': 'bacterial_gill_disease',
+            'Bacterial Red Disease (Bercak Merah)': 'bacterial_red_disease',
+            'Fungal Saprolegniasis (Penyakit Jamur)': 'fungal_saprolegniasis',
+            'Parasitic Disease (Penyakit Parasit)': 'parasitic_disease',
+            'White Tail Disease (Ekor Putih)': 'white_tail_disease',
+            'Ikan Sehat': 'healthy',
+        }
+        key = name_to_key.get(detection.predicted_class, '')
+        if key:
+            disease_info = Disease.query.filter_by(disease_name=key).first()
 
     # Label untuk tampilan
     disease_label = detection.predicted_class
