@@ -66,8 +66,10 @@ def preprocess_image(image_path):
         # 4. Konversi ke array numpy
         img_array = np.array(img, dtype=np.float32)
 
-        # 5. Normalisasi pixel ke range [0, 1]
-        img_array = img_array / 255.0
+        # 5. Preprocessing sesuai backbone MobileNetV2
+        # MobileNetV2 mengharapkan input range [-1, 1], bukan [0, 1]
+        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+        img_array = preprocess_input(img_array)
 
         # 6. Expand dimensions untuk batch: (H, W, C) → (1, H, W, C)
         img_array = np.expand_dims(img_array, axis=0)
