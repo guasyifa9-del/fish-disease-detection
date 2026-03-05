@@ -256,86 +256,122 @@
             </div>
         </div>
 
-        <!-- ===== Informasi Penyakit ===== -->
-        {% if disease_info and not is_healthy %}
-        <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3">
+        <!-- ===== Peringatan Confidence Rendah ===== -->
+        {% if prediction.confidence_score < 0.7 %} <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3"
+            style="border-left: 4px solid #f59e0b !important;">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-4" style="color: var(--green-800);">
-                    <i class="bi bi-journal-medical me-2" style="color: var(--green-600);"></i>
-                    Informasi Penyakit
-                </h5>
-
-                {% if disease_info.cause %}
-                <div class="info-section">
-                    <h6><i class="bi bi-virus me-1 text-danger"></i> Penyebab</h6>
-                    <p>{{ disease_info.cause }}</p>
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill me-3 fs-4" style="color: #f59e0b;"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1" style="color: #92400e;">
+                            ⚠️ Hasil Deteksi Kurang Yakin ({{ (prediction.confidence_score * 100)|round(1) }}%)
+                        </h6>
+                        <p class="text-muted mb-1" style="font-size: 0.9rem;">
+                            Tingkat keyakinan AI di bawah 70%. Kemungkinan penyebab:
+                        </p>
+                        <ul class="text-muted mb-2" style="font-size: 0.85rem;">
+                            <li>Foto tidak jelas atau terlalu jauh</li>
+                            <li>Jenis ikan tidak termasuk dalam data pelatihan AI</li>
+                            <li>Ikan bukan ikan air tawar budidaya (lele, nila, patin, gurame, mas, bawal)</li>
+                        </ul>
+                        <p class="mb-0 fw-semibold" style="font-size: 0.85rem; color: #92400e;">
+                            <i class="bi bi-person-badge me-1"></i>
+                            Disarankan konsultasi ke ahli perikanan untuk diagnosis yang lebih akurat.
+                        </p>
+                    </div>
                 </div>
-                {% endif %}
-
-                {% if disease_info.symptoms %}
-                <div class="info-section">
-                    <h6><i class="bi bi-thermometer-half me-1" style="color: #f59e0b;"></i> Gejala yang Terlihat</h6>
-                    <p>{{ disease_info.symptoms }}</p>
-                </div>
-                {% endif %}
-
-                {% if disease_info.treatment %}
-                <div class="info-section treatment-highlight">
-                    <h6 style="color: var(--green-700);">
-                        <i class="bi bi-capsule me-1"></i> ⭐ Cara Penanganan (PENTING)
-                    </h6>
-                    <p style="color: var(--text-dark);">{{ disease_info.treatment }}</p>
-                </div>
-                {% endif %}
-
-                {% if disease_info.prevention %}
-                <div class="info-section">
-                    <h6><i class="bi bi-shield-check me-1" style="color: var(--teal-500);"></i> Cara Pencegahan</h6>
-                    <p>{{ disease_info.prevention }}</p>
-                </div>
-                {% endif %}
-
-                <a href="{{ url_for('main.disease_info', disease_name=disease_info.disease_name) }}"
-                    class="btn btn-sm btn-green-outline mt-2">
-                    <i class="bi bi-book me-1"></i> Baca Info Lengkap
-                </a>
             </div>
-        </div>
-        {% elif is_healthy %}
-        <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3"
-            style="border-left: 4px solid var(--green-500) !important;">
-            <div class="card-body p-4 text-center">
-                <div style="font-size: 3rem;">🎉</div>
-                <h5 class="fw-bold mt-2" style="color: var(--green-700);">Ikan Anda Sehat!</h5>
-                <p class="text-muted mb-0">
-                    Tidak ditemukan tanda-tanda penyakit pada ikan.
-                    Tetap jaga kualitas air dan pakan untuk menjaga kesehatan ikan Anda.
-                </p>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- ===== Tombol Aksi ===== -->
-        <div class="row g-3 mb-4 no-print animate-fade-in-up delay-4">
-            <div class="col-md-4">
-                <a href="{{ url_for('main.upload') }}" class="btn btn-green btn-lg w-100 py-3">
-                    <i class="bi bi-camera me-2"></i> Deteksi Gambar Lain
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('main.history') }}" class="btn btn-green-outline btn-lg w-100 py-3">
-                    <i class="bi bi-clock-history me-2"></i> Lihat Riwayat
-                </a>
-            </div>
-            <div class="col-md-4">
-                <button class="btn btn-lg w-100 py-3" id="printBtn"
-                    style="background: var(--green-100); color: var(--green-700); border: 2px solid var(--green-200); font-weight: 600; border-radius: 10px;">
-                    <i class="bi bi-printer me-2"></i> Cetak Hasil
-                </button>
-            </div>
-        </div>
-
     </div>
+    {% endif %}
+
+    <!-- ===== Disclaimer Jenis Ikan ===== -->
+    <div class="alert mb-4 animate-fade-in-up delay-3"
+        style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; font-size: 0.82rem;">
+        <i class="bi bi-info-circle me-1" style="color: var(--green-600);"></i>
+        <strong>Catatan:</strong> Sistem ini dilatih untuk ikan air tawar budidaya (lele, nila, patin, gurame, mas,
+        bawal, mujair). Hasil mungkin kurang akurat untuk ikan hias dan ikan laut.
+    </div>
+
+    <!-- ===== Informasi Penyakit ===== -->
+    {% if disease_info and not is_healthy %}
+    <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4" style="color: var(--green-800);">
+                <i class="bi bi-journal-medical me-2" style="color: var(--green-600);"></i>
+                Informasi Penyakit
+            </h5>
+
+            {% if disease_info.cause %}
+            <div class="info-section">
+                <h6><i class="bi bi-virus me-1 text-danger"></i> Penyebab</h6>
+                <p>{{ disease_info.cause }}</p>
+            </div>
+            {% endif %}
+
+            {% if disease_info.symptoms %}
+            <div class="info-section">
+                <h6><i class="bi bi-thermometer-half me-1" style="color: #f59e0b;"></i> Gejala yang Terlihat</h6>
+                <p>{{ disease_info.symptoms }}</p>
+            </div>
+            {% endif %}
+
+            {% if disease_info.treatment %}
+            <div class="info-section treatment-highlight">
+                <h6 style="color: var(--green-700);">
+                    <i class="bi bi-capsule me-1"></i> ⭐ Cara Penanganan (PENTING)
+                </h6>
+                <p style="color: var(--text-dark);">{{ disease_info.treatment }}</p>
+            </div>
+            {% endif %}
+
+            {% if disease_info.prevention %}
+            <div class="info-section">
+                <h6><i class="bi bi-shield-check me-1" style="color: var(--teal-500);"></i> Cara Pencegahan</h6>
+                <p>{{ disease_info.prevention }}</p>
+            </div>
+            {% endif %}
+
+            <a href="{{ url_for('main.disease_info', disease_name=disease_info.disease_name) }}"
+                class="btn btn-sm btn-green-outline mt-2">
+                <i class="bi bi-book me-1"></i> Baca Info Lengkap
+            </a>
+        </div>
+    </div>
+    {% elif is_healthy %}
+    <div class="card border-0 shadow mb-4 animate-fade-in-up delay-3"
+        style="border-left: 4px solid var(--green-500) !important;">
+        <div class="card-body p-4 text-center">
+            <div style="font-size: 3rem;">🎉</div>
+            <h5 class="fw-bold mt-2" style="color: var(--green-700);">Ikan Anda Sehat!</h5>
+            <p class="text-muted mb-0">
+                Tidak ditemukan tanda-tanda penyakit pada ikan.
+                Tetap jaga kualitas air dan pakan untuk menjaga kesehatan ikan Anda.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== Tombol Aksi ===== -->
+    <div class="row g-3 mb-4 no-print animate-fade-in-up delay-4">
+        <div class="col-md-4">
+            <a href="{{ url_for('main.upload') }}" class="btn btn-green btn-lg w-100 py-3">
+                <i class="bi bi-camera me-2"></i> Deteksi Gambar Lain
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ url_for('main.history') }}" class="btn btn-green-outline btn-lg w-100 py-3">
+                <i class="bi bi-clock-history me-2"></i> Lihat Riwayat
+            </a>
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-lg w-100 py-3" id="printBtn"
+                style="background: var(--green-100); color: var(--green-700); border: 2px solid var(--green-200); font-weight: 600; border-radius: 10px;">
+                <i class="bi bi-printer me-2"></i> Cetak Hasil
+            </button>
+        </div>
+    </div>
+
+</div>
 </div>
 {% endblock %}
 
