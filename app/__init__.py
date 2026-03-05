@@ -77,7 +77,28 @@ def _load_cnn_model(app):
         )
         return
 
-    # --- Cek apakah file model ada ---
+    # --- Cek apakah file model ada dan valid ---
+    # Jika file tidak ada atau terlalu kecil (LFS pointer),
+    # coba download dari Google Drive
+    need_download = False
+    if not os.path.exists(model_path):
+        need_download = True
+    elif os.path.getsize(model_path) < 1_000_000:  # < 1MB = LFS pointer
+        logger.warning("File model terlalu kecil, kemungkinan LFS pointer. Mencoba download...")
+        need_download = True
+
+    if need_download:
+        try:
+            from download_model import ensure_model
+            if not ensure_model():
+                logger.warning("Gagal download model. Fitur prediksi tidak tersedia.")
+                _model_available = False
+                return
+        except Exception as e:
+            logger.warning(f"Auto-download model gagal: {e}")
+            _model_available = False
+            return
+
     if not os.path.exists(model_path):
         logger.warning("=" * 60)
         logger.warning("  MODEL CNN TIDAK DITEMUKAN!")
