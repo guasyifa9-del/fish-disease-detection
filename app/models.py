@@ -12,8 +12,16 @@ Tabel:
   4. DetectionDetail → Detail relasi antara detection dan disease + catatan
 """
 
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from app import db
+
+# Timezone WIB (UTC+7)
+WIB = timezone(timedelta(hours=7))
+
+
+def now_wib():
+    """Return waktu sekarang dalam WIB."""
+    return datetime.now(WIB)
 
 
 # ============================================================
@@ -36,7 +44,7 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=now_wib)
 
     # Relasi: satu user bisa punya banyak deteksi
     detections = db.relationship('Detection', backref='user', lazy='dynamic')
@@ -80,7 +88,7 @@ class Detection(db.Model):
     image_path = db.Column(db.String(255), nullable=False)
     predicted_class = db.Column(db.String(100), nullable=False)
     confidence_score = db.Column(db.Float, nullable=False)
-    detection_date = db.Column(db.DateTime, default=datetime.now)
+    detection_date = db.Column(db.DateTime, default=now_wib)
 
     # Relasi: satu deteksi bisa punya banyak detail
     details = db.relationship('DetectionDetail', backref='detection', lazy='dynamic',
